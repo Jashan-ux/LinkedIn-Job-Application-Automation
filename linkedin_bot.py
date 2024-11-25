@@ -2,15 +2,24 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException
 
 
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument("--detach")
 chrome_options.add_argument("--ignore-certificate-errors") 
-
+import time 
 
 driver = webdriver.Chrome(options=chrome_options)
+def abort_application():
+    # Click Close Button
+    close_button = driver.find_element(by=By.CLASS_NAME, value="artdeco-modal__dismiss")
+    close_button.click()
 
+    time.sleep(2)
+    # Click Discard Button
+    discard_button = driver.find_elements(by=By.CLASS_NAME, value="artdeco-modal__confirm-dialog-btn")[1]
+    discard_button.click()
 try:
     
     driver.get(
@@ -44,22 +53,23 @@ try:
                 print("Interface 3: Direct login form detected.")
             except:
                 print("No recognizable login interface detected.")
-                driver.quit()
-                exit()
+                
+
+
 
    
     email_input = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.ID, "username"))
     )
     email_input.clear()
-    email_input.send_keys("Jash.100daysoxxxx@gmail.com")
+    email_input.send_keys("xxxxxxxxxxxxxx@gmail.com")
 
     
     password_input = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.ID, "password"))
     )
     password_input.clear()
-    password_input.send_keys("xxxxxxxxx")
+    password_input.send_keys("xxxxxxxxxx")
 
     
     sign_in_button = WebDriverWait(driver, 10).until(
@@ -68,32 +78,59 @@ try:
     sign_in_button.click()
     print("Successfully signed in.")
 
-    jobs_icon = driver.find_element(By.XPATH, "//*[@id='global-nav']/div/nav/ul/li[3]/a")
+    # Navigate to the Jobs section
+    jobs_icon = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.XPATH, "//*[@id='global-nav']/div/nav/ul/li[3]/a/div/div/li-icon/svg"))
+    )
     jobs_icon.click()
-    print("Jobs icon clicked.")
+    print("Jobs section opened.")
 
-    
-    easy_apply_button = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.XPATH, "//*[contains(@aria-label, 'Easy Apply')]"))
-    )
-    
-    easy_apply_button.click()
-    print("Easy Apply button clicked.")
 
-    
-    phone_input = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.XPATH, "//input[@name='phoneNumber']"))
-    )
-    phone_input.clear()
-    phone_input.send_keys("930666231x")
-    print("Phone number entered.")
+    time.sleep(5)
 
-    
-    next_button = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.XPATH, "//button[@aria-label='Next']"))
-    )
-    next_button.click()
-    print("Next button clicked.")
+    all_listings = driver.find_elements(by=By.CSS_SELECTOR, value=".job-card-container--clickable")
+
+    # Apply for Jobs
+    for listing in all_listings:
+        print("Opening Listing")
+        listing.click()
+        time.sleep(2)
+        try:
+            # Click Apply Button
+            apply_button = driver.find_element(by=By.CSS_SELECTOR, value=".jobs-s-apply button")
+            apply_button.click()
+
+            # Insert Phone Number
+            # Find an <input> element where the id contains phoneNumber
+            time.sleep(5)
+            phone = driver.find_element(by=By.CSS_SELECTOR, value="input[id*=phoneNumber]")
+            if phone.text == "":
+                phone.send_keys("930xxxxx310")
+
+            # Check the Submit Button
+            submit_button = driver.find_element(by=By.CSS_SELECTOR, value="footer button")
+            if submit_button.get_attribute("data-control-name") == "continue_unify":
+                abort_application()
+                print("Complex application, skipped.")
+                continue
+            else:
+                # Click Submit Button
+                print("Submitting job application")
+                submit_button.click()
+
+            time.sleep(2)
+            # Click Close Button
+            close_button = driver.find_element(by=By.CLASS_NAME, value="artdeco-modal__dismiss")
+            close_button.click()
+
+        except NoSuchElementException:
+            abort_application()
+            print("No application button, skipped.")
+            continue
+
+        time.sleep(5)
+        driver.quit()
+
 
 finally:
     input("Press Enter to exit...")
